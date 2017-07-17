@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Learn how to use the Firebase platform on the Web">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web app</title>
+
+  <!-- Firebase library -->
+  <script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
+  <!-- jquery library -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="script/login.js"></script>
+  <script src="script/firebase.js"></script>
+
+  <!-- Style sheet and css -->
+  <link rel="stylesheet" type="text/css" href="styles/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+
+  <!-- Material Design Lite -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.orange-indigo.min.css">
+  <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+</head>
+
+<body>
+  <div id="snackbar" class="mdl-js-snackbar mdl-snackbar">
+    <div class="mdl-snackbar__text"></div>
+    <button class="mdl-snackbar__action" type="button"></button>
+  </div>
+  <div id="loader" class="loader" hidden="hidden"></div>
+  <hgroup>
+    <h3>Support Chat App</h3>
+    <h4 id="message">Please login to continue</h4>
+  </hgroup>
+  <form id="myDiv" class="animate-bottom">
+    <div class="group">
+      <input type="email" id="username" required><span class="highlight"></span><span class="bar"></span>
+      <label>Username</label>
+    </div>
+    <div class="group">
+      <input type="password" id="password" required><span class="highlight"></span><span class="bar"></span>
+      <label>Password</label>
+    </div>
+    <button id="sign-in" type="button" class="button buttonBlue" onClick='login();'>Login
+    <div class="ripples buttonRipples"><span class="ripplesCircle"></span></div>
+  </button>
+  </form>
+
+  <script src="js/main.js"></script>
+</body>
+
+</html>
