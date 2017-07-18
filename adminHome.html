@@ -43,8 +43,8 @@
 
   <!-- Firebase library -->
   <script src="https://www.gstatic.com/firebasejs/4.1.3/firebase.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="script/firebase.js"></script>
+  <script data-require="moment.js@2.10.2" data-semver="2.10.2" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment.min.js"></script>
 
   <!-- Material Design Lite -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -57,6 +57,10 @@
 </head>
 
 <body>
+  <div id="snackbar" class="mdl-js-snackbar mdl-snackbar">
+    <div class="mdl-snackbar__text"></div>
+    <button class="mdl-snackbar__action" type="button"></button>
+  </div>
   <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header">
 
     <!-- Header section containing logo -->
@@ -76,32 +80,40 @@
     <main class="mdl-layout__content mdl-color--grey-100">
       <div id="messages-card-container" class="mdl-cell mdl-cell--12-col mdl-grid">
         <!-- Messages container -->
-        <div id="messages-card" class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--6-col">
-          <div id="activeuser" hidden="hidden">
-            <span id="userName">Bapi Das</span>
-            <span id="status">Online</span>
+        <div id="messages-card" class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--6-col-tablet mdl-cell--6-col-desktop">
+          <!-- Selected user status -->
+          <div id="activeuser" hidden="hidden" style="margin-left:8px; margin-top:8px" class="mdl-cell mdl-cell--12-col">
+            <span id="userName"></span>
+            <p id="onstatus"></p>
           </div>
           <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+            <div id="loader" class="loader" hidden="hidden"></div>
             <div id="messages">
               <span id="message-filler"></span>
             </div>
             <form id="message-form" action="#">
               <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                 <input class="mdl-textfield__input" type="text" id="message">
-                <label class="mdl-textfield__label" for="message">Type Message...</label>
+                <label class="mdl-textfield__label" for="message">Message...</label>
               </div>
               <button id="submit" disabled type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-              Send
-            </button>
+                Send
+              </button>
+            </form>
+            <form id="image-form" action="#">
+              <input id="mediaCapture" type="file" accept="image/*,capture=camera">
+              <button id="submitImage" title="Add an image" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color--amber-400 mdl-color-text--white">
+                <i class="material-icons">image</i>
+              </button>
             </form>
           </div>
         </div>
         <!-- User list container -->
         <div id="userlist-card" class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--6-col">
-          <ul id="userlist">
-
-          </ul>
-      </div>
+          <div id="userlist" style="margin-left:10px;">
+            <span id="message-filler"></span>
+          </div>
+        </div>
       </div>
     </main>
   </div>

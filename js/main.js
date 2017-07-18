@@ -1,10 +1,10 @@
 // Initialize Firebase variables
 var database = firebase.database();
-var userRef = database.ref('/users');
 var auth = firebase.auth();
 const messaging = firebase.messaging();
 
 //create local vaiables
+var userRef = '/users';
 var userData = null;
 var loader = document.getElementById("loader");
 var form = document.getElementById("myDiv");
@@ -25,8 +25,7 @@ function login() {
       .then((success) => {
         userData = auth.currentUser;
         console.log("Firebase success: " + userData.uid);
-        window.location.replace('adminHome.html');
-        //updateToken();
+        checkuserType();
       })
       .catch((error) => {
         var errorCode = error.code;
@@ -47,22 +46,22 @@ function login() {
             };
             break;
           case 'auth/invalid-email':
-          data = {
-            message: 'Invalid email address',
-            timeout: 2000
-          };
+            data = {
+              message: 'Invalid email address',
+              timeout: 2000
+            };
             break;
           case 'auth/user-disabled':
-          data = {
-            message: 'User is disable contact administrator',
-            timeout: 2000
-          };
+            data = {
+              message: 'User is disable contact administrator',
+              timeout: 2000
+            };
             break;
           case 'auth/wrong-password':
-          data = {
-            message: 'Password is invalid',
-            timeout: 2000
-          };
+            data = {
+              message: 'Password is invalid',
+              timeout: 2000
+            };
             break;
           default:
             data = {
@@ -82,6 +81,32 @@ function login() {
   }
 };
 
+function checkuserType() {
+  var ref = database.ref(userRef);
+  ref.child(userData.uid).once('value')
+    .then(function(snapshot) {
+      var user = snapshot.val();
+      if (user.userType == 'admin') {
+        //updateToken();
+        window.location.replace('adminHome.html');
+      } else {
+        auth.signOut();
+        // Hide and unhide view
+        message.innerText = 'Please login to continue';
+        form.removeAttribute('hidden');
+        loader.setAttribute('hidden', 'true');
+        data = {
+          message: 'User invalid try another account',
+          timeout: 2000
+        };
+        snackbar.MaterialSnackbar.showSnackbar(data);
+      }
+    })
+    .catch(function(error) {
+      console.error('Unable to get.', error);
+    });
+};
+
 function updateToken() {
   if (userData) {
     messaging.getToken()
@@ -89,8 +114,7 @@ function updateToken() {
         if (currentToken) {
           console.log('FCM device token:', currentToken);
           // Saving the Device Token to the datastore.
-          var map = ['/fcmToken/' + currentToken]
-          userRef.child(userData.uid).update(map);
+          userRef.child(userData.uid).child('fcmToken').set(currentToken);
         } else {
           // Need to request permissions to show notifications.
         }
