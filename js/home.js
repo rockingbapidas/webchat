@@ -1,13 +1,16 @@
 // Initialize Firebase variables
 var database = firebase.database();
 var auth = firebase.auth();
+var storage = firebase.storage();
 const messaging = firebase.messaging();
 
 // Create local variables
 var admindata = null;
 var userdata = null;
 var userRef = '/users';
+var groupRef = '/groups';
 var chatRef = '/chat_msg';
+var chatImage = 'chat_img/';
 
 //cast DOM element to the variables
 var username = document.getElementById('user-name');
@@ -194,6 +197,18 @@ function usercreate(user, lastMessage) {
   userlist.scrollTop = this.userlist.scrollHeight;
 };
 
+function getGroups() {
+
+}
+
+function groupcreate(group) {
+
+}
+
+function getGroupLastMessage(group) {
+
+}
+
 function loadMessages(user) {
   loader.removeAttribute('hidden');
   while (messageList.firstChild) {
@@ -284,11 +299,24 @@ function showMessages(chat) {
     div.setAttribute('id', chat.val().timeStamp);
     messageList.appendChild(div);
   }
+
   div.querySelector('.name').textContent = chat.val().senderName;
   var messageElement = div.querySelector('.message');
-  messageElement.textContent = chat.val().messageText;
-  // Replace all line breaks by <br>.
-  messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
+
+  if (chat.val().chatType == 'text') {
+    messageElement.textContent = chat.val().messageText;
+    // Replace all line breaks by <br>.
+    messageElement.innerHTML = messageElement.innerHTML.replace(/\n/g, '<br>');
+  } else {
+    var image = document.createElement('img');
+    image.addEventListener('load', function() {
+      messageList.scrollTop = messageList.scrollHeight;
+    }.bind(this));
+    setImageUrl(chat.val().fileUrl, image);
+    messageElement.innerHTML = '';
+    messageElement.appendChild(image);
+  }
+
   // Show the card fading-in and scroll to view the new message.
   setTimeout(function() {
     div.classList.add('visible')
@@ -304,11 +332,13 @@ function sendMessage() {
     var room_2 = userdata.userId + "_" + admindata.userId;
     var timeStamp = Math.floor(Date.now());
     var chat = {
+      "chatType": "text",
       "messageText": messageInput.value,
       "receiverName": userdata.fullName,
       "receiverUid": userdata.userId,
       "senderName": admindata.fullName,
       "senderUid": admindata.userId,
+      "readSuccessfully": false,
       "sentSuccessfully": true,
       "timeStamp": timeStamp
     };
@@ -319,7 +349,6 @@ function sendMessage() {
         if (snapshot.child(room_1).val()) {
           cref.child(room_1).child(timeStamp).set(chat)
             .then(function() {
-              updateLastMessage(messageInput.value);
               clearTextField(messageInput);
               toggleButton();
             })
@@ -362,9 +391,10 @@ function sendMessage() {
 function setImageUrl(imageUri, imgElement) {
   if (imageUri.startsWith('gs://')) {
     imgElement.src = LOADING_IMAGE_URL;
-    this.storage.refFromURL(imageUri).getMetadata().then(function(metadata) {
-      imgElement.src = metadata.downloadURLs[0];
-    });
+    storage.refFromURL(imageUri).getMetadata()
+      .then(function(metadata) {
+        imgElement.src = metadata.downloadURLs[0];
+      });
   } else {
     imgElement.src = imageUri;
   }
@@ -383,7 +413,53 @@ function saveImageMessage(event) {
     return;
   }
   if (userdata) {
-
+    var room_1 = admindata.userId + "_" + userdata.userId;
+    var room_2 = userdata.userId + "_" + admindata.userId;
+    var timeStamp = Math.floor(Date.now());
+    var chat = {
+      "chatType": "image",
+      "fileUrl": LOADING_IMAGE_URL,
+      "receiverName": userdata.fullName,
+      "receiverUid": userdata.userId,
+      "senderName": admindata.fullName,
+      "senderUid": admindata.userId,
+      "readSuccessfully": false,
+      "sentSuccessfully": true,
+      "timeStamp": timeStamp
+    };
+    //console.log(JSON.stringify(chat));
+    var cref = database.ref(chatRef);
+    cref.off();
+    cref.once('value').then(function(snapshot) {
+        if (snapshot.child(room_1).val()) {
+          cref.child(room_1).child(timeStamp).set(chat)
+            .then(function() {
+              uploadTask(room_1, timeStamp, file);
+            })
+            .catch(function(error) {
+              console.log('Error ', error);
+            });
+        } else if (snapshot.child(room_2).val()) {
+          cref.child(room_2).child(timeStamp).set(chat)
+            .then(function() {
+              uploadTask(room_2, timeStamp, file);
+            })
+            .catch(function(error) {
+              console.log('Error ', error);
+            });
+        } else {
+          cref.child(room_1).child(timeStamp).set(chat)
+            .then(function() {
+              uploadTask(room_1, timeStamp, file);
+            })
+            .catch(function(error) {
+              console.log('Error ', error);
+            });
+        }
+      })
+      .catch(function(error) {
+        console.log('Error ', error);
+      });
   } else {
     var data = {
       message: 'Please select user',
@@ -394,12 +470,80 @@ function saveImageMessage(event) {
   }
 };
 
+function uploadTask(room, timeStamp, file) {
+  var uploadTask = storage.ref(chatImage).child(String(timeStamp)).put(file);
+  uploadTask.on('state_changed', function(snapshot) {
+    // Handle progress uploads
+    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    console.log('Upload is ' + progress + '% done');
+    switch (snapshot.state) {
+      case firebase.storage.TaskState.PAUSED: // or 'paused'
+        console.log('Upload is paused');
+        break;
+      case firebase.storage.TaskState.RUNNING: // or 'running'
+        console.log('Upload is running');
+        break;
+    }
+  }, function(error) {
+    // Handle unsuccessful uploads
+    console.log(error);
+  }, function() {
+    // Handle successful uploads on complete
+    var downloadURL = uploadTask.snapshot.downloadURL;
+    updateFileUri(room, timeStamp, downloadURL);
+  });
+}
+
 function updateOnlineStaus(status) {
   var uref = database.ref(userRef);
-  uref.child(admindata.userId).child('online').set(status);
+  uref.child(admindata.userId).child('online').set(status).then(function() {
+      uploadTask(room_1, timeStamp, file);
+    })
+    .catch(function(error) {
+      console.log('Error ', error);
+    });
 };
 
 function updateLastSeen() {
   var uref = database.ref(userRef);
-  uref.child(admindata.userId).child('lastSeenTime').set(Math.floor(Date.now()));
+  uref.child(admindata.userId).child('lastSeenTime').set(Math.floor(Date.now()))
+    .then(function() {
+      console.log('Last seen time updated');
+    })
+    .catch(function(error) {
+      console.log('Error ', error);
+    });
 };
+
+function updateFileUri(room, timeStamp, uri) {
+  var chatF = database.ref(chatRef);
+  chatF.child(room).child(timeStamp).child('fileUrl').set(uri)
+    .then(function() {
+      console.log('File url updated');
+    })
+    .catch(function(error) {
+      console.log('Error ', error);
+    });
+}
+
+function updateSentStatus(room, timeStamp) {
+  var chatS = database.ref(chatRef);
+  chatS.child(room).child(timeStamp).child('sentSuccessfully').set(true)
+    .then(function() {
+      console.log('Sent status updated');
+    })
+    .catch(function(error) {
+      console.log('Error ', error);
+    });
+}
+
+function updateReadStatus(room, timeStamp) {
+  var chatR = database.ref(chatRef);
+  chatR.child(room).child(timeStamp).child('readSuccessfully').set(true)
+    .then(function() {
+      console.log('Read status updated');
+    })
+    .catch(function(error) {
+      console.log('Error ', error);
+    });
+}

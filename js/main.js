@@ -110,7 +110,7 @@ function checkuserType() {
 function updateToken() {
   if (userData) {
     messaging.getToken()
-      .then(function(currentToken) {
+    .then(function(currentToken) {
         if (currentToken) {
           console.log('FCM device token:', currentToken);
           // Saving the Device Token to the datastore.
